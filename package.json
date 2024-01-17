@@ -1,0 +1,17 @@
+{
+    "dependencies": {
+        "cheerio": "^1.0.0-rc.12",
+        "puppeteer": "^21.7.0",
+        "ts-node": "^10.9.2"
+    },
+    "name": "kakao-crawler",
+    "description": "kakao-crawler for team-project",
+    "version": "1.0.0",
+    "main": "main.js",
+    "scripts": {
+        "start": "nodemon --exec ts-node",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC"
+}
