@@ -38,28 +38,16 @@ async function kakaoScrape(url: string): Promise<void> {
     while (loadMoreVisible) {
         try {
             // "더보기" 버튼이 로드될 때까지 대기
-            await page.waitForSelector('.txt_more', {
-                timeout: 1000,
-            });
-            const content = await page.content();
-            const $ = cheerio.load(content);
-            const testprint = $(
-                '#mArticle > div.cont_evaluation > div.evaluation_review > ul > li:nth-child(2) > div.comment_info > p > span'
-            ).text();
-            console.log(testprint);
-            // if (testprint[0] === '리뷰 더보기') {
-            //     loadMoreVisible = false;
-            // }
-            await page.evaluate(() => {
-                const loadMoreButton = document.querySelector('.txt_more');
-                console.log(loadMoreButton);
-                if (loadMoreButton) {
-                    loadMoreButton.scrollIntoView(); // 버튼이 화면에 보이도록 스크롤.
+            await page.waitForSelector(
+                '#mArticle > div.cont_evaluation > div.evaluation_review > a > span.txt_more',
+                {
+                    timeout: 1000,
                 }
-            });
+            );
 
-            const loadMoreButton = await page.$('.txt_more');
-
+            const loadMoreButton = await page.$(
+                '#mArticle > div.cont_evaluation > div.evaluation_review > a > span.txt_more'
+            );
             if (loadMoreButton) {
                 await loadMoreButton.click();
                 // 참조 해제
@@ -96,22 +84,27 @@ async function kakaoScrape(url: string): Promise<void> {
             console.log(error);
             await page.screenshot({ path: 'error.png' });
             loadMoreVisible = false;
-            await browser.close();
+            //await browser.close();
         }
     }
     const content = await page.content();
     const $ = cheerio.load(content); //뭐지 이건
-
-    const reviews = $('.txt_comment')
-        .map((i, element) => {
-            const reviewText = $(element).text();
-            return reviewText;
-        })
-        .get();
+    let reviewTexts: string[] = [];
+    $('#mArticle > div.cont_evaluation > div.evaluation_review > ul > li').each(
+        (index, element) => {
+            const reviewText = $(element)
+                .find('div.comment_info > p > span')
+                .text();
+            reviewTexts.push(reviewText);
+        }
+    );
     const endTime = performance.now();
 
-    console.log(reviews);
-    console.log(reviews.length);
+    reviewTexts = reviewTexts.filter((value, index, self) => {
+        return self.indexOf(value) === index;
+    });
+    console.log(reviewTexts);
+    console.log(reviewTexts.length);
     console.log(`크롤링 소요 시간: ${(endTime - startTime).toFixed(3)}ms`);
     await browser.close(); //headless모드 적용시 주석처리 할것
 }
