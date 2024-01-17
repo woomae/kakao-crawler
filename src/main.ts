@@ -31,20 +31,29 @@ async function kakaoScrape(url: string): Promise<void> {
     await page.goto(url, { waitUntil: 'networkidle0' });
 
     let previousReviewCount = 0; // 총 리뷰 수
-    let loadMoreVisible = '후기 더보기';
+    let loadMoreVisible = true;
     const expectedReviewCountPerLoad = 5; // 한 번에 로드되는 리뷰의 수
     const additionalWaitTime = 3000; // 추가 대기 시간 (5초)
 
-    while ((loadMoreVisible = '후기 더보기')) {
+    while (loadMoreVisible) {
         try {
             // "더보기" 버튼이 로드될 때까지 대기
             await page.waitForSelector('.txt_more', {
                 timeout: 1000,
             });
+            const content = await page.content();
+            const $ = cheerio.load(content);
+            const testprint = $(
+                '#mArticle > div.cont_evaluation > div.evaluation_review > ul > li:nth-child(2) > div.comment_info > p > span'
+            ).text();
+            console.log(testprint);
+            // if (testprint[0] === '리뷰 더보기') {
+            //     loadMoreVisible = false;
+            // }
             await page.evaluate(() => {
                 const loadMoreButton = document.querySelector('.txt_more');
-                //이 if문에서 뭔가 문제가 있는듯
-                if (loadMoreButton?.textContent === '후기 더보기') {
+                console.log(loadMoreButton);
+                if (loadMoreButton) {
                     loadMoreButton.scrollIntoView(); // 버튼이 화면에 보이도록 스크롤.
                 }
             });
@@ -53,7 +62,6 @@ async function kakaoScrape(url: string): Promise<void> {
 
             if (loadMoreButton) {
                 await loadMoreButton.click();
-
                 // 참조 해제
                 loadMoreButton.dispose();
 
@@ -73,29 +81,28 @@ async function kakaoScrape(url: string): Promise<void> {
                     previousReviewCount,
                     expectedReviewCountPerLoad
                 );
-
                 if (newReviewsLoaded) {
                     previousReviewCount = await page.$$eval(
-                        'txt_comment',
+                        '.txt_comment',
                         (elements) => elements.length
                     );
                 } else {
-                    loadMoreVisible = '후기 접기';
+                    loadMoreVisible = false;
                 }
             } else {
-                loadMoreVisible = '후기 접기';
+                loadMoreVisible = false;
             }
         } catch (error) {
             console.log(error);
             await page.screenshot({ path: 'error.png' });
-            loadMoreVisible = '후기 접기';
+            loadMoreVisible = false;
             await browser.close();
         }
     }
     const content = await page.content();
     const $ = cheerio.load(content); //뭐지 이건
 
-    const reviews = $('txt_comment')
+    const reviews = $('.txt_comment')
         .map((i, element) => {
             const reviewText = $(element).text();
             return reviewText;
@@ -106,6 +113,6 @@ async function kakaoScrape(url: string): Promise<void> {
     console.log(reviews);
     console.log(reviews.length);
     console.log(`크롤링 소요 시간: ${(endTime - startTime).toFixed(3)}ms`);
-    // await browser.close();
+    await browser.close(); //headless모드 적용시 주석처리 할것
 }
 kakaoScrape('https://place.map.kakao.com/9388609');
