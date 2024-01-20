@@ -1,7 +1,8 @@
 import puppeteer from 'puppeteer';
 import cheerio from 'cheerio';
 import SELECTORS from './tags';
-import read_kakao_reviews from './read_kakao_reviews';
+import read_kakao_reviews from './readkakaoReviews';
+import getLikePoint from './getLikePoint';
 
 export default async function kakaoScrape(url: string): Promise<void> {
     const startTime = performance.now();
@@ -36,9 +37,19 @@ export default async function kakaoScrape(url: string): Promise<void> {
     // 페이지 이동 {로딩 완료까지 대기}
     await page.goto(url, { waitUntil: 'networkidle0' });
 
-    let loadMoreVisible = true;
-    const additionalWaitTime = 2000; // 추가 대기 시간 (2초)
+    //추가 대기시간 설정
+    const additionalWaitTime = 3000; // 추가 대기시간 (3초)
 
+    //like point 로직
+    await page.waitForSelector(SELECTORS.likePoint, {
+        timeout: additionalWaitTime,
+    });
+    const likePointContent = await page.content();
+    const likePointResult = getLikePoint(likePointContent);
+    console.log(likePointResult);
+
+    //페이지 스프레드 로직
+    let loadMoreVisible = true;
     while (loadMoreVisible) {
         try {
             // "더보기" 버튼이 로드될 때까지 대기

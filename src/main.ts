@@ -1,3 +1,3 @@
-import kakaoScrape from './kakao_crawler';
+import kakaoScrape from './kakaoCrawler';
 
-kakaoScrape('https://place.map.kakao.com/9388609');
+kakaoScrape('https://place.map.kakao.com/1899980947');
